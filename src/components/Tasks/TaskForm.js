@@ -20,9 +20,13 @@ const TaskForm = ({ onSubmit, onCancel }) => {
     try {
       const [projectsRes, usersRes] = await Promise.all([
         api.get('/projects'),
-        api.get('/users')
+        api.get('/users/member')
       ]);
-      
+
+      // Debug logs
+      console.log('Projects response:', projectsRes.data);
+      console.log('Users response:', usersRes.data);
+
       setProjects(projectsRes.data);
       setUsers(usersRes.data.filter(user => user.role === 'member'));
     } catch (error) {
