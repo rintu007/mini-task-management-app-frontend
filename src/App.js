@@ -13,6 +13,7 @@ import ProjectList from './components/Projects/ProjectList';
 import TaskList from './components/Tasks/TaskList';
 import UserList from './components/Users/UserList';
 import AuditLog from './components/Audit/AuditLog';
+import ProjectTasks from './components/Projects/ProjectTasks';
 import './App.css';
 
 // Helper component to render dashboard based on role
@@ -51,6 +52,14 @@ function AppContent() {
         <Route path="tasks" element={<TaskList />} />
         <Route path="users" element={<UserList />} />
         <Route path="audit" element={<AuditLog />} />
+        <Route 
+          path="/projects/:projectId/tasks" 
+          element={
+            <PrivateRoute>
+              <ProjectTasks />
+            </PrivateRoute>
+          } 
+        />
       </Route>
     </Routes>
   );
