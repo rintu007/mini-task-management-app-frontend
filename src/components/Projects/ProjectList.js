@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+// components/Projects/ProjectList.js
+import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import ProjectItem from './ProjectItem';
 import ProjectForm from './ProjectForm';
 import './Projects.css';
@@ -9,9 +11,39 @@ const ProjectList = ({ limit }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { socket } = useSocket();
 
-  const fetchProjects = useCallback(async () => {
+  useEffect(() => {
+    fetchProjects();
+    
+    // Listen for project assignment events
+    if (socket) {
+      socket.on('manager-assigned', handleManagerAssigned);
+      socket.on('manager-removed', handleManagerRemoved);
+      
+      return () => {
+        socket.off('manager-assigned', handleManagerAssigned);
+        socket.off('manager-removed', handleManagerRemoved);
+      };
+    }
+  }, [socket]);
+
+  const handleManagerAssigned = (data) => {
+    // Refresh projects if the current user is the one assigned
+    if (data.userId === user.id) {
+      fetchProjects();
+    }
+  };
+
+  const handleManagerRemoved = (data) => {
+    // Refresh projects if the current user is the one removed
+    if (data.userId === user.id) {
+      fetchProjects();
+    }
+  };
+
+  const fetchProjects = async () => {
     try {
       const response = await api.get('/projects');
       let projectsData = response.data;
@@ -23,14 +55,13 @@ const ProjectList = ({ limit }) => {
       setProjects(projectsData);
     } catch (error) {
       console.error('Failed to fetch projects', error);
+      if (error.response?.status === 401) {
+        logout();
+      }
     } finally {
       setLoading(false);
     }
-  }, [limit]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  };
 
   const handleCreateProject = async (projectData) => {
     try {
@@ -92,6 +123,5 @@ const ProjectList = ({ limit }) => {
     </div>
   );
 };
-
 
 export default ProjectList;
